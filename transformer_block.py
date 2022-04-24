@@ -6,9 +6,14 @@ from keras import layers
 class TransformerBlock(layers.Layer):
     def __init__(self, embed_dim, num_heads, ff_dim, rate=0.1):
         super(TransformerBlock, self).__init__()
-        self.att = layers.MultiHeadAttention(num_heads=num_heads, key_dim=embed_dim)
+        self.att = layers.MultiHeadAttention(num_heads=num_heads, key_dim=embed_dim, kernel_initializer="glorot_uniform",
+                        bias_initializer=keras.initializers.HeNormal())
+
+        self.att_2 = layers.MultiHeadAttention(num_heads=num_heads, key_dim=embed_dim,
+                                             kernel_initializer="glorot_uniform",
+                                             bias_initializer=keras.initializers.HeNormal())
         self.ffn = keras.Sequential(
-            [layers.Dense(ff_dim, activation="relu"), layers.Dense(embed_dim),]
+            [layers.Dense(ff_dim, activation="elu",bias_initializer=keras.initializers.HeNormal()), layers.Dense(embed_dim)]
         )
         self.layernorm1 = layers.LayerNormalization(epsilon=1e-6)
         self.layernorm2 = layers.LayerNormalization(epsilon=1e-6)
@@ -18,6 +23,8 @@ class TransformerBlock(layers.Layer):
     def call(self, inputs, training):
         attn_output = self.att(inputs, inputs)
         attn_output = self.dropout1(attn_output, training=training)
+        #attn_output = self.att_2( attn_output, attn_output)
+
         out1 = self.layernorm1(inputs + attn_output)
         ffn_output = self.ffn(out1)
         ffn_output = self.dropout2(ffn_output, training=training)
