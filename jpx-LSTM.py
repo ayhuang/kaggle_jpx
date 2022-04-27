@@ -11,6 +11,7 @@ import tensorflow as tf
 from tensorflow import keras
 from keras import layers
 from tensorflow.python.ops.numpy_ops import np_config
+import sys
 
 np_config.enable_numpy_behavior()
 
@@ -19,6 +20,10 @@ print(tf.__version__)
 import warnings
 warnings.filterwarnings("ignore")
 
+train_ds = tf.data.experimental.load( "train_files/train_dataset")
+val_ds = tf.data.experimental.load( "train_files/val_dataset")
+
+
 prices = pd.read_csv("train_files/stock_prices.csv")
 pd.options.display.width = None
 
@@ -26,7 +31,7 @@ pd.set_option('display.max_rows', 3000)
 pd.set_option('display.max_columns', 3000)
 prices.head(5)
 
-stock_list = [1332,9990,9991,1333,1376]
+stock_list = [1332]
 if len(stock_list) != 0:
     prices = prices[prices.SecuritiesCode.isin( stock_list )]
 
@@ -118,19 +123,21 @@ model = tf.keras.models.Sequential([
 ])
 lr_schedule = tf.keras.callbacks.LearningRateScheduler( lambda epoch: 1e-8 * 10**(int(epoch / 30)))
 early_stop = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=12)
-optimizer = tf.keras.optimizers.SGD(learning_rate=3e-5, momentum=0.9)
+optimizer = tf.keras.optimizers.SGD(learning_rate=3e-3, momentum=0.9)
 #optimizer = tf.keras.optimizers.Adam(learning_rate=4e-4)
 
-model.compile(loss=tf.keras.losses.Huber(), optimizer=optimizer, metrics=["mse"])
+model.compile(loss=tf.keras.losses.Huber(), optimizer=optimizer, metrics=["mae"])
 model.summary()
 
 train_ds,val_ds, daily_price_series = prep_dataset( prices, window_size, batch_size)
 
-history = model.fit(train_ds, epochs=600,  validation_data=val_ds, #, callbacks=[early_stop])
-                            callbacks=[lr_schedule])
+history = model.fit(train_ds, epochs=3000,  validation_data=val_ds) #, callbacks=[early_stop])
+                            #callbacks=[lr_schedule])
 plotting.plot_training_hist( history )
+train_pred = model.predict( train_ds, batch_size = batch_size)
+val_pred = model.predict( val_ds, batch_size = batch_size )
 
-plotting.plot_fitting( model, daily_price_series, window_size, 0)
+plotting.plot_fitting( model, daily_price_series, np.concatenate((train_pred, val_pred), axis=0), window_size)
 # model = tf.keras.models.Sequential([
 #     tf.keras.layers.Dense(10, input_shape=[window_size], activation="relu"),
 #     tf.keras.layers.Dense(10, activation="relu"),
