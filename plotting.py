@@ -1,8 +1,10 @@
+import random
+
 import matplotlib.pyplot as plt
 import numpy as np
 
 
-def plot_series(time, series, subplot=None, format="-",  start=0, end=None, ):
+def plot_series(time, series, subplot=None, format="-",  start=0, end=None ):
     if subplot is None:
         plt.plot(time[start:end], series[start:end], format)
         #plt.xlabel("Time")
@@ -42,9 +44,11 @@ def plot_fitting( model, data_series, pred, window_size):
 
     #plt.figure(figsize=(18, 6))
     figure, axis = plt.subplots(4, 1, figsize=(17,9))
-    X = range(0, pred.shape[0])
-    for n in range(0,no_plot):
-        plot_series(X, data_series[window_size+1:-(window_size-1),n], axis[n])#n%2])
-        plot_series(X, pred[:,n], axis[n])#n%2])
+    X = range(0, pred.shape[0]-1)
+    for i in range(0,no_plot):
+        n = random.randint(0,1999)
+        #plot_series(X, data_series[window_size+1:-(window_size-1),n], axis[i])#n%2])
+        plot_series(X, data_series[window_size:-1, n], axis[i])  # n%2])
+        plot_series(X, pred[:-1,n], axis[i])#n%2])
 
     plt.show()
