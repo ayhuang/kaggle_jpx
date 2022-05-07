@@ -85,7 +85,7 @@ def prep_dataset( prices,  window_size, batch_size):
     #ds_val = windowed_dataset( val, window_size, batch_size
     return ds, np.array(daily_target_list)
 
-window_size = 7
+window_size = 5
 batch_size = 64
 ds, daily_price_series = prep_dataset( prices, window_size, batch_size)
 
