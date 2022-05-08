@@ -65,7 +65,7 @@ def windowed_dataset(series, window_size, batch_size):
     ds = ds.flat_map(lambda w: w.batch(window_size + 1))
   #  ds = ds.shuffle( len( series))
     # first 2 columns are closing price, volume, last column is the label - target
-    ds = ds.map(lambda w: (w[:,:,0:2], w[-1,:,2].reshape(-1)))
+    ds = ds.map(lambda w: (w[:,:,0], w[-1,:,2].reshape(-1)))
     #if batch_size == 1: return ds
     return ds.batch(batch_size).prefetch(1)
 
@@ -93,7 +93,7 @@ window_size = 7
 batch_size = 64
 ds, daily_price_series = prep_dataset( prices, window_size, batch_size)
 
-tf.data.experimental.save( ds, "train_files/price_dataset")
+tf.data.experimental.save( ds, "train_files/closing_price_dataset")
 #tf.data.experimental.save( val_ds, "train_files/val_dataset")
 np.save( "train_files/daily_series.npy", daily_price_series)
 sys.exit()
