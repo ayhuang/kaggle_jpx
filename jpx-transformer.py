@@ -20,7 +20,7 @@ warnings.filterwarnings("ignore")
 
 embed_dim = 2000  # Embedding size for each token
 num_heads = 2  # Number of attention heads
-ff_dim = 40  # Hidden layer size in feed forward network inside transformer
+ff_dim = 14  # Hidden layer size in feed forward network inside transformer
 window_size = 7
 batch_size = 64
 no_epoches =3000
@@ -29,7 +29,7 @@ split = 17
 #train_ds = tf.data.experimental.load( "train_files/train_dataset")
 #val_ds = tf.data.experimental.load( "train_files/val_dataset")
 
-ds = tf.data.experimental.load( "train_files/price_target_dataset")
+ds = tf.data.experimental.load( "train_files/price_target_dataset_window_size_7")
 
 train_ds = ds.take( split)
 val_ds = ds.skip(split)

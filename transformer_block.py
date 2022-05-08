@@ -11,13 +11,11 @@ class TransformerBlock(layers.Layer):
                                              kernel_initializer="glorot_uniform",
                                             # attention_axes = (1,2),
                                              dropout=rate,
-                                             kernel_regularizer=keras.regularizers.L1(2.e-4),#L2(l1=0.001, l2=0.001),
+                                             #kernel_regularizer=keras.regularizers.L1(5.e-5),
                                              bias_initializer=keras.initializers.HeNormal())
         self.ffn = keras.Sequential(
             [layers.Dense(ff_dim, activation="elu",
-
-                               #    kernel_regularizer=keras.regularizers.L1L2(l1=0.05, l2=0.05),
-                               # bias_regularizer=keras.regularizers.L2(0.01),
+                            #kernel_regularizer=keras.regularizers.L1(1.0e-3),
                             bias_initializer=keras.initializers.HeNormal()
                           ),
              layers.Dense(embed_dim)]
@@ -26,14 +24,14 @@ class TransformerBlock(layers.Layer):
         self.layernorm2 = layers.LayerNormalization(epsilon=1e-6)
         self.dropout1 = layers.Dropout(rate)
         self.dropout2 = layers.Dropout(rate)
-      #  self.conv1 = layers.Conv1D(filters=32, kernel_size=3, strides=1, padding="causal")# input_shape=[None, embed_dim]),
+        self.conv1 = layers.Conv1D(filters=10, kernel_size=3, strides=1, padding="causal")#, input_shape=[None, embed_dim]),
 
     def call(self, inputs, training):
         attn_output = self.att(inputs, inputs)
         attn_output = self.dropout1(attn_output, training=training)
 
         out1 = self.layernorm1(inputs + attn_output)
-       # out1 = self.conv1(out1)
+        #ffn_output = self.conv1(out1)
         ffn_output = self.ffn(out1)
         ffn_output = self.dropout2(ffn_output, training=training)
         return self.layernorm2(out1 + ffn_output)
