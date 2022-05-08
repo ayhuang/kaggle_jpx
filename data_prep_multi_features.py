@@ -1,19 +1,15 @@
-import random
 
 import numpy as np
 import pandas as pd
-#import jpx_tokyo_market_prediction
-import plotting
+
 import sys
 from sklearn.preprocessing import OrdinalEncoder
 
 import tensorflow as tf
-from tensorflow import keras
-from keras import layers
+
 from tensorflow.python.ops.numpy_ops import np_config
 np_config.enable_numpy_behavior()
 
-import transformer_block
 print(tf.__version__)
 import warnings
 warnings.filterwarnings("ignore")
@@ -43,8 +39,8 @@ codes_size = len(codes)
 
 prices = prices[['Date', 'SecuritiesCode', 'Close', 'Volume', 'Target']].dropna()
 #normalize the data
-prices["Close"] = prices["Close"]/100000
-prices["Volume"] = prices["Volume"]/6.0e7
+#prices["Close"] = prices["Close"]/100000
+#prices["Volume"] = prices["Volume"]/6.0e7
 prices["Target"] = prices["Target"]*100
 
 # not all days have the same number of stocks, so we need to pad the missing data
@@ -69,6 +65,23 @@ def windowed_dataset(series, window_size, batch_size):
     #if batch_size == 1: return ds
     return ds.batch(batch_size).prefetch(1)
 
+#calculate the change percentage between two consecutive days, day1 and day2 have the shape of (stock_list, features_list+label)
+def calculate_change_percentage_per_day( day1, day2):
+    # last column is the label - target, so we skip it
+    for k in range(0, day1.shape[1] - 1):
+        for j in range(0, day1.shape[0]):
+            day1[j, k] = 0.0 if day1[j, k] < 1.e-7 or day2[j, k] < 1.e-7 else (day2[j,k] - day1[j,k]) / day1[j,k]
+
+    return day1
+
+
+#calculate the change percentage between two consecutive days
+def calculate_change_percentage( series):
+    for i in range(1, len(series)):
+        series[i-1] = calculate_change_percentage_per_day(series[i-1], series[i])
+
+    series.pop()
+    return series
 
 
 # prep time series data set for training and validation
@@ -80,11 +93,9 @@ def prep_dataset( prices,  window_size, batch_size):
         daily_data = price_series[price_series.Date == dt ].drop(['Date'], axis=1).sort_values(by=['SecuritiesCode'])
         daily_data_list.append( pad_missing_stock_code( daily_data.to_numpy(), codes))
 
-    # daily_target_list is a 1201 long list of 1-d (2000) array
-    # split = int(len(daily_target_list)*0.90)
-    # train = daily_target_list[:split]
-    # val = daily_target_list[split:]
-
+    # daily_data_list is a 1201 long list of 1-d (2000) array, each array is a day's data, sorted by stock code
+    # need to calculate the change percentage between two consecutive days per stock
+    daily_data_list = calculate_change_percentage( daily_data_list)
     ds = windowed_dataset( daily_data_list, window_size, batch_size )
     #ds_val = windowed_dataset( val, window_size, batch_size
     return ds, np.array(daily_data_list)
