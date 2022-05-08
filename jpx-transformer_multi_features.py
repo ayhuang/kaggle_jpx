@@ -17,13 +17,14 @@ print(tf.__version__)
 import warnings
 warnings.filterwarnings("ignore")
 
+daily_price_series = np.load("train_files/daily_series.npy")
 
 embed_dim = 2000  # Embedding size for each token
 num_heads = 2  # Number of attention heads
 ff_dim = 40  # Hidden layer size in feed forward network inside transformer
 window_size = 7
 batch_size = 64
-no_epoches =3000
+no_epoches =3
 # split into 90% train, 10% val
 split = 17
 #train_ds = tf.data.experimental.load( "train_files/train_dataset")

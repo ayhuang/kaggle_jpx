@@ -1,3 +1,4 @@
+import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 from keras import layers
@@ -8,15 +9,10 @@ class TransformerBlock(layers.Layer):
         super(TransformerBlock, self).__init__()
         self.att = layers.MultiHeadAttention(num_heads=num_heads, key_dim=embed_dim,
                                              kernel_initializer="glorot_uniform",
+                                            # attention_axes = (1,2),
                                              dropout=rate,
                                              kernel_regularizer=keras.regularizers.L1(2.e-4),#L2(l1=0.001, l2=0.001),
                                              bias_initializer=keras.initializers.HeNormal())
-
-        # self.att_2 = layers.MultiHeadAttention(num_heads=num_heads, key_dim=embed_dim,
-        #                                      kernel_initializer="glorot_uniform",
-        #                                     kernel_regularizer=keras.regularizers.L1L2( l1=0.2,l2=0.3),
-        #                                   #   bias_regularizer=keras.regularizers.L2( 0.2 ),
-        #                                      bias_initializer=keras.initializers.HeNormal())
         self.ffn = keras.Sequential(
             [layers.Dense(ff_dim, activation="elu",
 
@@ -55,4 +51,5 @@ class TokenAndPositionEmbedding(layers.Layer):
         #maxlen = tf.shape(x)[0].shape
         positions = tf.range(start=0, limit=self.width, delta=1)
         positions = self.pos_emb(positions)
-        return x + positions
+   #     positions = tf.expand_dims(positions, axis=2)
+        return x + positions #tf.repeat(positions, x.shape[-1], axis=2)
