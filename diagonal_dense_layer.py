@@ -27,7 +27,8 @@ class DiagonalDense(layers.Dense):
         if rank == 2 or rank is None:
             return super(DiagonalDense,self).call(inputs)
         else:
-            return tf.linalg.diag_part( super(DiagonalDense,self).call(inputs))
+            #return tf.linalg.diag_part( super(DiagonalDense,self).call(inputs))
+            return tf.reduce_sum( tf.math.multiply(inputs, tf.transpose(self.kernel)), axis=-1)
 
        # return tf.einsum( einsum_str, super(DiagonalDense,self).call(inputs))
 
