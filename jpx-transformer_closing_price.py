@@ -25,14 +25,14 @@ ff_dim = 35  # Hidden layer size in feed forward network inside transformer
 window_size = 7
 batch_size = 64
 
-no_epoches =6000
+no_epoches =100
 
 # split into 90% train, 10% val
 split = 17
 #train_ds = tf.data.experimental.load( "train_files/train_dataset")
 #val_ds = tf.data.experimental.load( "train_files/val_dataset")
 
-ds = tf.data.experimental.load( "train_files/mf_dataset")
+ds = tf.data.experimental.load( "train_files/closing_price_dataset")
 
 train_ds = ds.take( split)
 val_ds = ds.skip(split)
@@ -46,9 +46,9 @@ tf.debugging.set_log_device_placement(True)
 gpus = tf.config.list_logical_devices('GPU')
 strategy = tf.distribute.MirroredStrategy(gpus)
 with strategy.scope():
-    inputs= layers.Input(shape=( window_size, embed_dim, 2))
-    #x= layers.BatchNormalizationV2()(inputs)
-    x= diagonal_dense_layer.DiagonalDense(embed_dim)(inputs)
+    inputs= layers.Input(shape=( window_size, embed_dim))
+    x= layers.BatchNormalizationV2()(inputs)
+    #x= diagonal_dense_layer.DiagonalDense(embed_dim)(inputs)
     #x = layers.Dense(1)(x)#inputs)
     #x= layers.Reshape((window_size, embed_dim))(x)
     embedding_layer = transformer_block.TokenAndPositionEmbedding(window_size, 0, embed_dim)

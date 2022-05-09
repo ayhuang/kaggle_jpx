@@ -26,14 +26,10 @@ class DiagonalDense(layers.Dense):
         #no need to do anything
         if rank == 2 or rank is None:
             return super(DiagonalDense,self).call(inputs)
-        elif rank == 3:
-            einsum_str = 'kii->ki'
-        elif rank == 4:
-            einsum_str = 'mkii->mki'
         else:
-            raise ValueError('DiagonalDense layer does not support inputs with rank greater than 4.')
+            return tf.linalg.diag_part( super(DiagonalDense,self).call(inputs))
 
-        return tf.einsum( einsum_str, super(DiagonalDense,self).call(inputs))
+       # return tf.einsum( einsum_str, super(DiagonalDense,self).call(inputs))
 
     #override the parent method the output shape now is simply the input shape without the last dimension
     def compute_output_shape(self, input_shape):

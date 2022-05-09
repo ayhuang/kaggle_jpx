@@ -43,11 +43,11 @@ def plot_fitting( model, data_series, pred, window_size):
     #results = np.array(forecast)[:, 0, :]
 
     #plt.figure(figsize=(18, 6))
-    figure, axis = plt.subplots(4, 1, figsize=(17,9))
-    X = range(0, pred.shape[0]-1)
+    figure, axis = plt.subplots(4, 1, figsize=(15,8))
+    X = range(0, pred.shape[0])
     for i in range(0,no_plot):
         n = random.randint(0,1999)
         #plot_series(X, data_series[window_size+1:-(window_size-1),n], axis[i])#n%2])
-        plot_series(X, data_series[window_size:-1, n,2], axis[i])  # n%2])
-
+        plot_series(X, data_series[window_size-1:, n,2], axis[i])  # n%2])
+        plot_series(X, pred[:,n], axis[i])
     plt.show()
