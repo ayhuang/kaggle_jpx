@@ -39,12 +39,14 @@ codes_size = len(codes)
 
 prices = prices[['Date', 'SecuritiesCode', 'Open', 'High', 'Low', 'Close', 'Volume', 'Target']].dropna()
 prices['Low_high_ratio'] = 1 - prices['Low'] / prices['High']
-prices['Open_close_diff_ratio'] = (prices['Open'] - prices['Close']) / prices['Close']
-prices.drop(['High','Low'], axis=1, inplace=True)
-prices = prices[['Date', 'SecuritiesCode', 'Open', 'Close', 'Volume', 'Low_high_ratio', 'Open_close_diff_ratio', 'Target']]
+#prices['Open_close_diff_ratio'] = (prices['Open'] - prices['Close']) / prices['Close']
+#prices.drop(['High','Low'], axis=1, inplace=True)
 prices.dropna()
+#prices = prices[['Date', 'SecuritiesCode', 'Open', 'Close', 'Volume', 'Low_high_ratio', 'Open_close_diff_ratio', 'Target']]
+prices = prices[['Date', 'SecuritiesCode', 'Open', 'Close', 'Volume', 'Low_high_ratio', 'Target']]
 
-#prices["Target"] = prices["Target"]*100
+
+prices["Target"] = prices["Target"]*100
 
 # not all days have the same number of stocks, so we need to pad the missing data
 def pad_missing_stock_code( sample, codes):
@@ -71,19 +73,20 @@ def windowed_dataset(series, window_size, batch_size):
 #calculate the change percentage between two consecutive days, day1 and day2 have the shape of (stock_list, features_list+label)
 #col_list is the list of features needed to calculate the change percentage, the rest features should stay
 def calculate_change_percentage_per_day( day1, day2, col_list):
+    r = day2.copy()
     for k in col_list:
         for j in range(0, day1.shape[0]):
-            day2[j, k] = 0.0 if day1[j, k] < 1.e-7 or day2[j, k] < 1.e-7 else (day2[j,k] - day1[j,k]) / day1[j,k]
+            r[j, k] = 0.0 if day1[j, k] < 1.e-8 or day2[j, k] < 1.e-8 else (day2[j,k] - day1[j,k]) / day1[j,k]
 
-    return day2
+    return r
 
 
 #calculate the change percentage between two consecutive days
 def calculate_change_percentage( series, cols_to_calculate):
     for i in range(1, len(series)):
-        series[i] = calculate_change_percentage_per_day(series[i-1], series[i], cols_to_calculate)
+        series[i-1] = calculate_change_percentage_per_day(series[i-1], series[i], cols_to_calculate)
 
-    series.pop(0) # remove the first element
+    series.pop() # remove the first element
     return series
 
 
@@ -106,7 +109,7 @@ window_size = 7
 batch_size = 64
 ds, daily_price_series = prep_dataset( prices, window_size, batch_size)
 
-tf.data.experimental.save( ds, "train_files/enhanced_mf_dataset")
+tf.data.experimental.save( ds, "train_files/enhanced_mf_dataset_4")
 #tf.data.experimental.save( val_ds, "train_files/val_dataset")
 np.save( "train_files/daily_series.npy", daily_price_series)
 sys.exit()

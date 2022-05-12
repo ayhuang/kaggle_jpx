@@ -48,6 +48,6 @@ def plot_fitting( model, data_series, pred, window_size):
     for i in range(0,no_plot):
         n = random.randint(0,1999)
         #plot_series(X, data_series[window_size+1:-(window_size-1),n], axis[i])#n%2])
-        plot_series(X, data_series[window_size-1:, n,2], axis[i])  # n%2])
-        plot_series(X, pred[:,n], axis[i])
+        plot_series(X, data_series[window_size-1:, n,-1], axis[i])  # n%2])
+        plot_series(X, pred[:,n], axis[i])#, format='xr')
     plt.show()

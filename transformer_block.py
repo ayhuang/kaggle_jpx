@@ -7,15 +7,15 @@ from keras import layers
 class TransformerBlock(layers.Layer):
     def __init__(self, embed_dim, num_heads, ff_dim, rate=0.1):
         super(TransformerBlock, self).__init__()
-        self.att = layers.MultiHeadAttention(num_heads=num_heads, key_dim=embed_dim,
+        self.att = layers.MultiHeadAttention(num_heads=num_heads, key_dim=128, #embed_dim,
                                              kernel_initializer="glorot_uniform",
                                             # attention_axes = (1,2),
                                              dropout=rate,
-                                             #kernel_regularizer=keras.regularizers.L1(5.e-5),
+                                             kernel_regularizer=keras.regularizers.L1(2.e-5),
                                              bias_initializer=keras.initializers.HeNormal())
         self.ffn = keras.Sequential(
             [layers.Dense(ff_dim, activation="elu",
-                            #kernel_regularizer=keras.regularizers.L1(1.0e-3),
+                            #kernel_regularizer=keras.regularizers.L1(1.0e-4),
                             bias_initializer=keras.initializers.HeNormal()
                           ),
              layers.Dense(embed_dim)]
