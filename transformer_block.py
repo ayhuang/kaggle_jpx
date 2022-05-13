@@ -2,7 +2,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 from keras import layers
-
+import math
 
 class TransformerBlock(layers.Layer):
     def __init__(self, embed_dim, num_heads, ff_dim, rate=0.1):
@@ -36,18 +36,29 @@ class TransformerBlock(layers.Layer):
         ffn_output = self.dropout2(ffn_output, training=training)
         return self.layernorm2(out1 + ffn_output)
 
-#Two seperate embedding layers, one for tokens, one for token index (positions).
 
 class TokenAndPositionEmbedding(layers.Layer):
-    def __init__(self, maxlen, vocab_size, embed_dim):
+    def __init__(self, maxlen, embed_dim):
         super(TokenAndPositionEmbedding, self).__init__()
-  #      self.token_emb = layers.Embedding(input_dim=vocab_size, output_dim=embed_dim)
-        self.pos_emb = layers.Embedding(input_dim=maxlen, output_dim=embed_dim)
+
+     #   self.pos_emb = layers.Embedding(input_dim=maxlen, output_dim=embed_dim)
         self.width = maxlen
+        self.embed_dim = embed_dim
 
     def call(self, x):
-        #maxlen = tf.shape(x)[0].shape
         positions = tf.range(start=0, limit=self.width, delta=1)
         positions = self.pos_emb(positions)
-   #     positions = tf.expand_dims(positions, axis=2)
         return x + positions #tf.repeat(positions, x.shape[-1], axis=2)
+
+
+class FixedPositionEmbedding(layers.Layer):
+    def __init__(self, seq_len, embed_dim):
+        super(TokenAndPositionEmbedding, self).__init__()
+        self.width = seq_len
+        self.embed_dim = embed_dim
+
+    def call(self, x):
+        positions = tf.range(start=0, limit=self.width, delta=1, dtype=tf.float32)
+        positions = tf.map_fn(fn=lambda t: 0.05 / math.exp(t / 1.5), elems=positions)
+        positions = tf.broadcast_to(tf.reshape(positions, [self.width,1]), [self.width, self.embed_dim])
+        return x + positions
