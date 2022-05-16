@@ -38,13 +38,12 @@ date_list = list(prices.Date.unique())
 codes_size = len(codes)
 
 prices = prices[['Date', 'SecuritiesCode', 'Open', 'High', 'Low', 'Close', 'Volume', 'Target']].dropna()
-prices['Low_high_ratio'] = 1 - prices['Low'] / prices['High']
+prices['Low_high_ratio'] = (1 - prices['Low'] / prices['High'])
 #prices['Open_close_diff_ratio'] = (prices['Open'] - prices['Close']) / prices['Close']
 #prices.drop(['High','Low'], axis=1, inplace=True)
 prices.dropna()
 #prices = prices[['Date', 'SecuritiesCode', 'Open', 'Close', 'Volume', 'Low_high_ratio', 'Open_close_diff_ratio', 'Target']]
 prices = prices[['Date', 'SecuritiesCode', 'Open', 'Close', 'Volume', 'Low_high_ratio', 'Target']]
-
 
 prices["Target"] = prices["Target"]*100
 
@@ -105,11 +104,11 @@ def prep_dataset( prices,  window_size, batch_size):
     #ds_val = windowed_dataset( val, window_size, batch_size
     return ds, np.array(daily_data_list)
 
-window_size = 7
+window_size = 10
 batch_size = 64
 ds, daily_price_series = prep_dataset( prices, window_size, batch_size)
 
-tf.data.experimental.save( ds, "train_files/enhanced_mf_dataset_4")
+tf.data.experimental.save( ds, "train_files/enhanced_mf_dataset_4_10")
 #tf.data.experimental.save( val_ds, "train_files/val_dataset")
 np.save( "train_files/daily_series.npy", daily_price_series)
 sys.exit()

@@ -5,6 +5,7 @@ from keras import layers
 class DiagonalDense(layers.Dense):
     def __init__(self ,
                  units,
+                 activation,
                use_bias=True,
                kernel_initializer='glorot_uniform',
                bias_initializer='zeros',
@@ -15,7 +16,7 @@ class DiagonalDense(layers.Dense):
                bias_constraint=None,
                **kwargs):
         super(DiagonalDense, self).__init__(
-            units, None, use_bias, kernel_initializer, bias_initializer, kernel_regularizer, bias_regularizer, activity_regularizer, kernel_constraint, bias_constraint, **kwargs)
+            units, activation, use_bias, kernel_initializer, bias_initializer, kernel_regularizer, bias_regularizer, activity_regularizer, kernel_constraint, bias_constraint, **kwargs)
 
 
     def call(self, inputs):
@@ -28,8 +29,15 @@ class DiagonalDense(layers.Dense):
             return super(DiagonalDense,self).call(inputs)
         else:
             #return tf.linalg.diag_part( super(DiagonalDense,self).call(inputs))
-            return tf.reduce_sum( tf.math.multiply(inputs, tf.transpose(self.kernel)), axis=-1)
+            outputs = tf.reduce_sum( tf.math.multiply(inputs, tf.transpose(self.kernel)), axis=-1)
 
+        if self.use_bias:
+            outputs = tf.nn.bias_add(outputs, self.bias)
+
+        if self.activation is not None:
+            outputs = self.activation(outputs)
+
+        return outputs
        # return tf.einsum( einsum_str, super(DiagonalDense,self).call(inputs))
 
     #override the parent method the output shape now is simply the input shape without the last dimension

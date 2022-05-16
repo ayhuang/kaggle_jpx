@@ -17,22 +17,24 @@ print(tf.__version__)
 import warnings
 warnings.filterwarnings("ignore")
 
+#tf.config.run_functions_eagerly(True) for debugging
+
 daily_price_series = np.load("train_files/daily_series.npy")
 
 embed_dim = 2000  # Embedding size for each token
 num_heads = 4  # Number of attention heads
 ff_dim =128  # Hidden layer size in feed forward network inside transformer
-window_size = 7
+window_size = 10
 batch_size = 64
 
-no_epoches = 8200
+no_epoches = 1500
 
 # split into 90% train, 10% val
 split = 17
 #train_ds = tf.data.experimental.load( "train_files/train_dataset")
 #val_ds = tf.data.experimental.load( "train_files/val_dataset")
 
-ds = tf.data.experimental.load( "train_files/enhanced_mf_dataset_4_7")
+ds = tf.data.experimental.load( "train_files/enhanced_mf_dataset_4_10")
 
 train_ds = ds.take( split)
 val_ds = ds.skip(split)
@@ -48,26 +50,27 @@ strategy = tf.distribute.MirroredStrategy(gpus)
 
 
 def learnRatefunction(epoch):
-    if epoch < 1000:
-        lr = 5.0e-1
+    if epoch < 100:
+        lr = 2.0e-1
+    elif epoch < 1000:
+        lr = 4.0e-1
     elif epoch < 2000:
-        lr = 2.5e-1
-    elif epoch < 5000:
-        lr = 1.e-1
-    elif epoch <8000:
-        lr = 5.0e-2
+        lr = 2.e-1
+    elif epoch <3000:
+        lr = 1.0e-1
     else:
-        lr = 2.e-2
+        lr = 5.e-2
     return lr
 
 
 with strategy.scope():
     inputs= layers.Input(shape=( window_size, embed_dim, 4))
     #x= layers.BatchNormalizationV2()(inputs)
-    x= diagonal_dense_layer.DiagonalDense(embed_dim, use_bias=False)(inputs)
-    #x = layers.Dense(1)(x)#inputs)
+    x= diagonal_dense_layer.DiagonalDense(embed_dim, activation='elu', use_bias=True)(inputs)
+    #x = layers.Conv1D(1,kernel_size=1, activation='relu',input_shape=(embed_dim,4))(inputs)
     #x= layers.Reshape((window_size, embed_dim))(x)
-    embedding_layer = transformer_block.TokenAndPositionEmbedding(window_size, 0, embed_dim)
+    embedding_layer = transformer_block.TokenAndPositionEmbedding(window_size,  embed_dim)
+    #embedding_layer = transformer_block.FixedPositionEmbedding(window_size, embed_dim, 0.1)
     x = embedding_layer(x)
     tb_1 = transformer_block.TransformerBlock(embed_dim, num_heads, ff_dim, rate=0.3)
  #   tb_2 = transformer_block.TransformerBlock(embed_dim, num_heads, 10, rate=0.1)
@@ -75,7 +78,7 @@ with strategy.scope():
     x = tb_1(x)
  #   x = tb_2(x)
     x = layers.GlobalAveragePooling1D()(x)#2D(data_format='channels_first')(x)
-    x = layers.Dropout(0.7)(x)
+    x = layers.Dropout(0.8)(x)
     #x = layers.Dense(10, activation='elu')(x)
     #x = layers.Dense(10, activation='relu')(x)
     #x = layers.Dense(embed_dim, activation='elu')(x)
@@ -86,7 +89,7 @@ with strategy.scope():
     lr_schedule = tf.keras.callbacks.LearningRateScheduler( learnRatefunction  ) #lambda epoch: 5.e-1 if epoch <300 1.e-1 elif epoch<800 else 1.0e-1 )# * 10**(-int(epoch / 1000)))
     #opt = tf.keras.optimizers.SGD(learning_rate=5.0e-1, momentum=0.8)
     opt = tf.keras.optimizers.Adam(learning_rate=5.0e-1, epsilon=1)
-    model.compile( optimizer=opt, metrics=["mae"], loss="mse")#, keras.losses.Huber(), )
+    model.compile( optimizer=opt, metrics=["mae"], loss="mse")#, run_eagerly=True)#, keras.losses.Huber(), )
 
     model.summary()
     history = model.fit( train_ds, epochs=no_epoches, validation_data=val_ds, callbacks=[lr_schedule])
